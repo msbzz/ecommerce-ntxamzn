@@ -45,104 +45,37 @@ export const ProductInputSchema = z.object({
 })
 
 
-// O código fornecido utiliza a biblioteca Zod para validação e criação de esquemas de dados no 
-// TypeScript/JavaScript. A seguir, uma explicação detalhada sobre os componentes da função e do esquema definido:
+// Order Item
+export const OrderItemSchema = z.object({
+  clientId: z.string().min(1, 'clientId is required'),
+  product: z.string().min(1, 'Product is required'),
+  name: z.string().min(1, 'Name is required'),
+  slug: z.string().min(1, 'Slug is required'),
+  category: z.string().min(1, 'Category is required'),
+  quantity: z
+    .number()
+    .int()
+    .nonnegative('Quantity must be a non-negative number'),
+  countInStock: z
+    .number()
+    .int()
+    .nonnegative('Quantity must be a non-negative number'),
+  image: z.string().min(1, 'Image is required'),
+  price: Price('Price'),
+  size: z.string().optional(),
+  color: z.string().optional(),
+})
 
+export const CartSchema = z.object({
+  items: z
+    .array(OrderItemSchema)
+    .min(1, 'Order must contain at least one item'),
+  itemsPrice: z.number(),
 
-// 1. Função Price
-// - Definição: const Price = (field: string) => { ... }
-//   - A função Price é um validador customizado criado para campos que representam preços.
-//   - Ela aceita um argumento field (nome do campo) para personalizar as mensagens de erro.
-// - Lógica de validação:
-//   - Usa o método z.coerce.number() para converter qualquer entrada em número antes da validação.
-//   - Aplica a função .refine() para verificar se o valor é válido.
-//    - Regex: ^\d+(\.\d{2})?$
-//     - Verifica se o número possui exatamente duas casas decimais (e.g., 49.99).
-//    - Utilitário formatNumberWithDecimal:
-//     - É usado para formatar o número antes de validar.
-//     - Supõe-se que esta função está no arquivo ./utils e converte o número para um formato com casas decimais.
-// - Mensagem de erro:
-//  - Se o número não estiver no formato correto, retorna uma mensagem personalizada com o nome do campo (field).
-
-// 2. Esquema ProductInputSchema
-// Esse é o esquema principal que valida os dados de entrada para produtos. Abaixo estão os campos e suas regras de validação:
-
-// - name:
-//   - Tipo: String.
-//   - Deve ter no mínimo 3 caracteres.
-//   - Mensagem de erro: "Name must be at least 3 characters".
-
-// - slug:
-//   - Tipo: String.
-//   - Deve ter no mínimo 3 caracteres.
-//   - Mensagem de erro: "Slug must be at least 3 characters".
-
-// - category:
-//   - Tipo: String.
-//   - É obrigatório.
-//   - Mensagem de erro: "Category is required".
-
-// - images:
-//   - Tipo: Array de strings.
-//   - Deve conter pelo menos 1 item.
-//   - Mensagem de erro: "Product must have at least one image".
-
-// - brand:
-//   - Tipo: String.
-//   - É obrigatório.
-//   - Mensagem de erro: "Brand is required".
-
-// - description:
-//   - Tipo: String.
-//   - É obrigatório.
-//   - Mensagem de erro: "Description is required".
-
-// - isPublished:
-//   - Tipo: Boolean.
-//   - Indica se o produto está publicado.
-
-// - price e listPrice:
-//   - Ambos utilizam a função Price para validação.
-//   - Mensagem de erro: "Price must have exactly two decimal places" ou "List price must have exactly two decimal places".
-
-// - countInStock:
-//   - Tipo: Número inteiro não negativo.
-//   - Mensagem de erro: "Count in stock must be a non-negative number".
-
-// - tags:
-//   - Tipo: Array de strings.
-//   - Valor padrão: array vazio [].
-
-// - sizes:
-//   - Tipo: Array de strings.
-//   - Valor padrão: array vazio [].
-
-// - colors:
-//   - Tipo: Array de strings.
-//   - Valor padrão: array vazio [].
-
-// - avgRating:
-//   - Tipo: Número.
-//   - Deve estar entre 0 e 5 (inclusive).
-//   - Mensagens de erro:
-//      - "Average rating must be at least 0".
-//      - "Average rating must be at most 5".
-
-// - numReviews:
-//   - Tipo: Número inteiro não negativo.
-//   - Mensagem de erro: "Number of reviews must be a non-negative number".
-
-// - ratingDistribution:
-//   - Tipo: Array de objetos.
-//   - Cada objeto deve conter:
-//     - rating: Número.
-//     - count: Número.
-//   - Máximo de 5 objetos no array.
-
-// - reviews:
-//   - Tipo: Array de strings.
-//   - Valor padrão: array vazio [].
-
-// - numSales:
-//   - Tipo: Número inteiro não negativo.
-//   - Mensagem de erro: "Number of sales must be a non-negative number".
+  taxPrice: z.optional(z.number()),
+  shippingPrice: z.optional(z.number()),
+  totalPrice: z.number(),
+  paymentMethod: z.optional(z.string()),
+  deliveryDateIndex: z.optional(z.number()),
+  expectedDeliveryDate: z.optional(z.date()),
+})
