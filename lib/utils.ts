@@ -35,6 +35,7 @@ export const toSlug = (text: string): string =>
     .replace(/[^\w\s-]+/g, '') // Remove caracteres não alfanuméricos, exceto espaços e hífens
     .replace(/\s+/g, '-') // Substitui espaços por hífens
     .replace(/^-+|-+$/g, '') // Remove hífens no início e no final
+    .replace(/-+/g, '-')
     
     
     // ------- Example ----------
