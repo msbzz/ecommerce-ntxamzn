@@ -7,7 +7,7 @@ import {
   FormField,
   FormItem,
   FormLabel,
-  FormMessage,
+  FormMessage
 } from '@/components/ui/form'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -17,12 +17,12 @@ import {
   SelectContent,
   SelectItem,
   SelectTrigger,
-  SelectValue,
+  SelectValue
 } from '@/components/ui/select'
 import {
   calculateFutureDate,
   formatDateTime,
-  timeUntilMidnight,
+  timeUntilMidnight
 } from '@/lib/utils'
 import { ShippingAddressSchema } from '@/lib/validator'
 import { zodResolver } from '@hookform/resolvers/zod'
@@ -40,8 +40,10 @@ import {
   APP_NAME,
   AVAILABLE_DELIVERY_DATES,
   AVAILABLE_PAYMENT_METHODS,
-  DEFAULT_PAYMENT_METHOD,
+  DEFAULT_PAYMENT_METHOD
 } from '@/lib/constants'
+import { createOrder } from '@/lib/actions/order.actions'
+import { toast } from '@/hooks/use-toast'
 
 const shippingAddressDefaultValues =
   process.env.NODE_ENV === 'development'
@@ -52,7 +54,7 @@ const shippingAddressDefaultValues =
         province: 'Quebec',
         phone: '4181234567',
         postalCode: 'H2X 1C4',
-        country: 'Canada',
+        country: 'Canada'
       }
     : {
         fullName: '',
@@ -61,7 +63,7 @@ const shippingAddressDefaultValues =
         province: '',
         phone: '',
         postalCode: '',
-        country: '',
+        country: ''
       }
 
 const CheckoutForm = () => {
@@ -76,21 +78,22 @@ const CheckoutForm = () => {
       totalPrice,
       shippingAddress,
       deliveryDateIndex,
-      paymentMethod = DEFAULT_PAYMENT_METHOD,
+      paymentMethod = DEFAULT_PAYMENT_METHOD
     },
     setShippingAddress,
     setPaymentMethod,
     updateItem,
     removeItem,
     setDeliveryDateIndex,
+    clearCart
   } = useCartStore()
   const isMounted = useIsMounted()
 
   const shippingAddressForm = useForm<ShippingAddress>({
     resolver: zodResolver(ShippingAddressSchema),
-    defaultValues: shippingAddress || shippingAddressDefaultValues,
+    defaultValues: shippingAddress || shippingAddressDefaultValues
   })
-  const onSubmitShippingAddress: SubmitHandler<ShippingAddress> = (values) => {
+  const onSubmitShippingAddress: SubmitHandler<ShippingAddress> = values => {
     setShippingAddress(values)
     setIsAddressSelected(true)
   }
@@ -113,7 +116,32 @@ const CheckoutForm = () => {
     useState<boolean>(false)
 
   const handlePlaceOrder = async () => {
-    // TODO: place order
+    const res = await createOrder({
+      items,
+      shippingAddress,
+      expectedDeliveryDate: calculateFutureDate(
+        AVAILABLE_DELIVERY_DATES[deliveryDateIndex!].daysToDeliver
+      ),
+      deliveryDateIndex,
+      paymentMethod,
+      itemsPrice,
+      shippingPrice,
+      taxPrice,
+      totalPrice
+    })
+    if (!res.success) {
+      toast({
+        description: res.message,
+        variant: 'destructive'
+      })
+    } else {
+      toast({
+        description: res.message,
+        variant: 'default'
+      })
+      clearCart()
+      router.push(`/checkout/${res.data?.orderId}`)
+    }
   }
   const handleSelectPaymentMethod = () => {
     setIsAddressSelected(true)
@@ -428,9 +456,9 @@ const CheckoutForm = () => {
                   <CardContent className='p-4'>
                     <RadioGroup
                       value={paymentMethod}
-                      onValueChange={(value) => setPaymentMethod(value)}
+                      onValueChange={value => setPaymentMethod(value)}
                     >
-                      {AVAILABLE_PAYMENT_METHODS.map((pm) => (
+                      {AVAILABLE_PAYMENT_METHODS.map(pm => (
                         <div key={pm.name} className='flex items-center py-1 '>
                           <RadioGroupItem
                             value={pm.name}
@@ -537,7 +565,7 @@ const CheckoutForm = () => {
                                 fill
                                 sizes='20vw'
                                 style={{
-                                  objectFit: 'contain',
+                                  objectFit: 'contain'
                                 }}
                               />
                             </div>
@@ -552,7 +580,7 @@ const CheckoutForm = () => {
 
                               <Select
                                 value={item.quantity.toString()}
-                                onValueChange={(value) => {
+                                onValueChange={value => {
                                   if (value === '0') removeItem(item)
                                   else updateItem(item, Number(value))
                                 }}
@@ -564,7 +592,7 @@ const CheckoutForm = () => {
                                 </SelectTrigger>
                                 <SelectContent position='popper'>
                                   {Array.from({
-                                    length: item.countInStock,
+                                    length: item.countInStock
                                   }).map((_, i) => (
                                     <SelectItem key={i + 1} value={`${i + 1}`}>
                                       {i + 1}
@@ -589,15 +617,15 @@ const CheckoutForm = () => {
                                 AVAILABLE_DELIVERY_DATES[deliveryDateIndex!]
                                   .name
                               }
-                              onValueChange={(value) =>
+                              onValueChange={value =>
                                 setDeliveryDateIndex(
                                   AVAILABLE_DELIVERY_DATES.findIndex(
-                                    (address) => address.name === value
+                                    address => address.name === value
                                   )!
                                 )
                               }
                             >
-                              {AVAILABLE_DELIVERY_DATES.map((dd) => (
+                              {AVAILABLE_DELIVERY_DATES.map(dd => (
                                 <div key={dd.name} className='flex'>
                                   <RadioGroupItem
                                     value={dd.name}
@@ -662,9 +690,9 @@ const CheckoutForm = () => {
                     </p>
                     <p className='text-xs'>
                       {' '}
-                      By placing your order, you agree to {APP_NAME}&apos;s <Link href='/page/privacy-policy'>
-                        privacy notice
-                      </Link> and
+                      By placing your order, you agree to {APP_NAME}&apos;s{' '}
+                      <Link href='/page/privacy-policy'>privacy notice</Link>{' '}
+                      and
                       <Link href='/page/conditions-of-use'>
                         {' '}
                         conditions of use
