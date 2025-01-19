@@ -3,13 +3,13 @@
 import {
   PayPalButtons,
   PayPalScriptProvider,
-  usePayPalScriptReducer,
+  usePayPalScriptReducer
 } from '@paypal/react-paypal-js'
 import { Card, CardContent } from '@/components/ui/card'
 import { useToast } from '@/hooks/use-toast'
 import {
   approvePayPalOrder,
-  createPayPalOrder,
+  createPayPalOrder
 } from '@/lib/actions/order.actions'
 import { IOrder } from '@/lib/db/models/order.model'
 import { formatDateTime } from '@/lib/utils'
@@ -18,14 +18,19 @@ import CheckoutFooter from '../checkout-footer'
 import { redirect, useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/button'
 import ProductPrice from '@/components/shared/product/product-price'
+import { loadStripe } from '@stripe/stripe-js'
+import { Elements } from '@stripe/react-stripe-js'
+import StripeForm from './stripe-form'
 
-export default function OrderPaymentForm({
+export default function OrderPaymentForm ({
   order,
   paypalClientId,
+  clientSecret
 }: {
   order: IOrder
   paypalClientId: string
   isAdmin: boolean
+  clientSecret: string | null
 }) {
   const router = useRouter()
   const {
@@ -37,14 +42,14 @@ export default function OrderPaymentForm({
     totalPrice,
     paymentMethod,
     expectedDeliveryDate,
-    isPaid,
+    isPaid
   } = order
   const { toast } = useToast()
 
   if (isPaid) {
     redirect(`/account/orders/${order._id}`)
   }
-  function PrintLoadingState() {
+  function PrintLoadingState () {
     const [{ isPending, isRejected }] = usePayPalScriptReducer()
     let status = ''
     if (isPending) {
@@ -59,7 +64,7 @@ export default function OrderPaymentForm({
     if (!res.success)
       return toast({
         description: res.message,
-        variant: 'destructive',
+        variant: 'destructive'
       })
     return res.data
   }
@@ -67,7 +72,7 @@ export default function OrderPaymentForm({
     const res = await approvePayPalOrder(order._id, data)
     toast({
       description: res.message,
-      variant: res.success ? 'default' : 'destructive',
+      variant: res.success ? 'default' : 'destructive'
     })
   }
 
@@ -126,6 +131,20 @@ export default function OrderPaymentForm({
               </div>
             )}
 
+            {!isPaid && paymentMethod === 'Stripe' && clientSecret && (
+              <Elements
+                options={{
+                  clientSecret
+                }}
+                stripe={stripePromise}
+              >
+                <StripeForm
+                  priceInCents={Math.round(order.totalPrice * 100)}
+                  orderId={order._id}
+                />
+              </Elements>
+            )}
+
             {!isPaid && paymentMethod === 'Cash On Delivery' && (
               <Button
                 className='w-full rounded-full'
@@ -138,6 +157,10 @@ export default function OrderPaymentForm({
         </div>
       </CardContent>
     </Card>
+  )
+
+  const stripePromise = loadStripe(
+    process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY as string
   )
 
   return (
@@ -182,7 +205,7 @@ export default function OrderPaymentForm({
                 {formatDateTime(expectedDeliveryDate).dateOnly}
               </p>
               <ul>
-                {items.map((item) => (
+                {items.map(item => (
                   <li key={item.slug}>
                     {item.name} x {item.quantity} = {item.price}
                   </li>
